@@ -1,46 +1,33 @@
-def vigenere_encrypt(plain_text, key):
-    encrypted_text = []
-    key_length = len(key)
+ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+def encrypt(plaintext,key):
+    ciphertext = ''
 
-    for i in range(len(plain_text)):
-        char = plain_text[i]
-        if char.isalpha():
-            key_char = key[i % key_length]
-            shift = ord(key_char.upper()) - ord('A')
-            if char.isupper():
-                encrypted_char = chr((ord(char) - ord('A') + shift) % 26 + ord('A'))
-            else:
-                encrypted_char = chr((ord(char) - ord('a') + shift) % 26 + ord('a'))
-            encrypted_text.append(encrypted_char)
-        else:
-            encrypted_text.append(char)
+    for i in range(len(plaintext)):
+        p = ALPHABET.index(plaintext[i])
+        k = ALPHABET.index(key[i%len(key)])
+        c = (p + k) % 26
+        ciphertext += ALPHABET[c]
 
-    return ''.join(encrypted_text)
+    return ciphertext
 
-def vigenere_decrypt(encrypted_text, key):
-    decrypted_text = []
-    key_length = len(key)
+def decrypt(ciphertext,key):
+    plaintext = ''
 
-    for i in range(len(encrypted_text)):
-        char = encrypted_text[i]
-        if char.isalpha():
-            key_char = key[i % key_length]
-            shift = ord(key_char.upper()) - ord('A')
-            if char.isupper():
-                decrypted_char = chr((ord(char) - ord('A') - shift) % 26 + ord('A'))
-            else:
-                decrypted_char = chr((ord(char) - ord('a') - shift) % 26 + ord('a'))
-            decrypted_text.append(decrypted_char)
-        else:
-            decrypted_text.append(char)
+    for i in range(len(ciphertext)):
+        p = ALPHABET.index(ciphertext[i])
+        k = ALPHABET.index(key[i%len(key)])
+        c = (p - k) % 26
+        plaintext += ALPHABET[c]
 
-    return ''.join(decrypted_text)
+    return plaintext
 
-# Example usage:
-plaintext = "HELLO"
-key = "KEY"
-encrypted_text = vigenere_encrypt(plaintext, key)
-print("Encrypted:", encrypted_text)
+plaintext = 'GEEKSFORGEEKS'
+key = 'AYUSH'
+expected_cipher_text = 'GCYCZFMLYLEIM'
 
-decrypted_text = vigenere_decrypt(encrypted_text, key)
-print("Decrypted:", decrypted_text)
+gotten_cipher_text = encrypt(plaintext, key)
+gotten_plain_text = decrypt(gotten_cipher_text, key)
+
+print((plaintext, key, expected_cipher_text))
+print((gotten_cipher_text, gotten_plain_text))
+
