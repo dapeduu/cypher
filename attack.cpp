@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <map>
 #include <regex>
+#include <set>
 using namespace std;
 
 double calculate_ic(const string& text) {
