@@ -12,18 +12,17 @@ def calculate_index_of_coincidence(text):
 
     # Count the occurrences of each letter in the text
     for char in text:
-        if char.isalpha():
-            if char in letter_count:
-                letter_count[char] += 1
-            else:
-                letter_count[char] = 1
+        if char in letter_count:
+            letter_count[char] += 1
+        else:
+            letter_count[char] = 1
 
     # Calculate the Index of Coincidence
     ioc = 0.0
     for count in letter_count.values():
         ioc += (count * (count - 1)) / (total_characters * (total_characters - 1))
 
-    return ioc
+    return ioc, letter_count
 
 # Example usage:
 text = """
@@ -35,4 +34,4 @@ And by opposing end them?
 William Shakespeare - Hamlet
 """
 ioc = calculate_index_of_coincidence(text)
-print("Index of Coincidence:", ioc)
+print("Index of Coincidence:", ioc[0], ioc[1])
