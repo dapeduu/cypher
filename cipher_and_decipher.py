@@ -6,15 +6,19 @@ def encrypt(plaintext: str, key: str):
 
     ciphertext = ''
 
+    print("encrypt")
     for i in range(len(plaintext)):
         if __ignore_char(plaintext[i]):
             ciphertext += plaintext[i]
             continue
 
-        p = ALPHABET.index(plaintext[i])
-        k = ALPHABET.index(key[i % len(key)])
-        c = (p + k) % 26
-        ciphertext += ALPHABET[c]
+        text_letter_index = ALPHABET.index(plaintext[i])
+        key_letter_index = ALPHABET.index(key[i % len(key)])
+        resulting_letter_index = (text_letter_index + key_letter_index) % 26
+        ciphertext += ALPHABET[resulting_letter_index]
+
+        print(f"{plaintext[i]} {key[i % len(key)]} = {ALPHABET[resulting_letter_index]}")
+    print()
 
     return ciphertext
 
@@ -24,15 +28,19 @@ def decrypt(ciphertext: str, key: str):
 
     plaintext = ''
 
+    print("decrypt")
     for i in range(len(ciphertext)):
         if __ignore_char(ciphertext[i]):
              plaintext += ciphertext[i]
              continue
 
-        p = ALPHABET.index(ciphertext[i])
-        k = ALPHABET.index(key[i % len(key)])
-        c = (p - k) % 26
-        plaintext += ALPHABET[c]
+        text_letter_index = ALPHABET.index(ciphertext[i])
+        key_letter_index = ALPHABET.index(key[i % len(key)])
+        resulting_letter_index = (text_letter_index - key_letter_index) % 26
+        plaintext += ALPHABET[resulting_letter_index]
+
+        print(f"{plaintext[i]} {key[i % len(key)]} = {ALPHABET[resulting_letter_index]}")
+    print()
 
     return plaintext
 
