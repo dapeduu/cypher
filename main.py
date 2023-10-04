@@ -1,9 +1,11 @@
-from cipher_and_decipher import decrypt, encrypt
+from cipher_and_decipher import decipher, cipher, generate_key
 
+text = "TESTEOILA"
+keyword = "senha"
+key = generate_key(text, keyword)
 
-
-encripted = encrypt(plaintext="The quick brown fox jumps over treze lazy dogs.", key="senha")
-decripted = decrypt(ciphertext=encripted, key="senha")
+encripted = cipher(text, key)
+decripted = decipher(encripted, key)
 
 print(f"Encripted: {encripted}")
 print(f"Decripted: {decripted}")
