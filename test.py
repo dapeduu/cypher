@@ -1,9 +1,11 @@
 import re
+import string
 import sys
 import collections
 import math
 import functools
 import cipher_and_decipher
+import consts
 # Input
 
 text = """rvgllakieg tye tirtucatzoe.  whvnvvei i
@@ -105,45 +107,24 @@ cipher_text_divided_by_key_length = divide_ciphertext_into_groups(cipher_text, g
 print(f'Cipher Text Divided By Key Length = {cipher_text_divided_by_key_length}')
 print('=' * 30)
 
-def frequency_analysis(group):
-    char_count = collections.Counter(group)    
-    sorted_char_count = sorted(char_count.items(), key=lambda x: x[1], reverse=True)
-    
-    return sorted_char_count
+def calculate_index_of_coincidence(text: str):
+    text = text.lower()  # Convert text to lowercase for case insensitivity
+    text = re.sub(r'[^a-zA-Z]', '', text) # Only characters from a to z
+    total_characters = len(text)
 
-def find_caesar_shift(char):
-    most_common_letter = 'A'
-    shift = ord(most_common_letter) - ord(char)
-    
-    if shift < 0:
-        shift += 26
-    
-    return shift
+    # Initialize a dictionary to count the frequency of each letter
+    letter_count = {}
 
-shifts = []
+    # Count the occurrences of each letter in the text
+    for char in text:
+        if char in letter_count:
+            letter_count[char] += 1
+        else:
+            letter_count[char] = 1
 
-for i, group in enumerate(cipher_text_divided_by_key_length):
-    group_frequency = frequency_analysis(group)
-    
-    most_common_char = group_frequency[0][0]
-    shift = find_caesar_shift(most_common_char)
-    
-    shifts.append(shift)
+    # Calculate the Index of Coincidence
+    ioc = 0.0
+    for count in letter_count.values():
+        ioc += (count * (count - 1)) / (total_characters * (total_characters - 1))
 
-    print(f"Group {i + 1} Caesar Shift Value: {shift}")
-
-print('=' * 30)
-
-def combine_shifts(shifts):
-    vigenere_key = ''
-    
-    for shift in shifts:
-        vigenere_key += chr(26 - shift + ord('A'))
-    
-    return vigenere_key
-
-vigenere_keyword = combine_shifts(shifts)
-vigenere_key = cipher_and_decipher.generate_key(cipher_text, vigenere_keyword)
-
-print("Reconstructed Vigenère Key:", vigenere_key)
-print("Decripted:", cipher_and_decipher.decipher(cipher_text, vigenere_key))
+    return ioc, letter_count
