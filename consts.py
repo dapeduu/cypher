@@ -35,3 +35,4 @@ ENGLISH_LETTER_FREQUENCIES = {
     'u': 0.0276, 'v': 0.0098, 'w': 0.0236, 'x': 0.0015, 'y': 0.0197,
     'z': 0.0007
 }
+MAX_KEY_SIZE = 10
