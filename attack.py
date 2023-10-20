@@ -1,19 +1,62 @@
-from collections import Counter
-import re
-from cipher_and_decipher import decrypt
-from consts import PORTUGUESE_LETTER_FREQUENCY, ALPHABET
+import functools
+import math
 
 
-def calculate_index_of_coincidence(text: str):
-    text = text.lower()  # Convert text to lowercase for case insensitivity
-    text = re.sub(r'[^a-zA-Z]', '', text) # Only characters from a to z
-    total_characters = len(text)
+cipher_text = ""
+
+def find_repeating_patterns(text, min_length=3):
+    patterns = {} 
+    for length in range(min_length, len(text)):
+        for i in range(len(text) - length + 1):
+            pattern = text[i:i+length]
+            if pattern in patterns:
+                patterns[pattern].append(i)
+            else:
+                patterns[pattern] = [i]
+
+    repeating_patterns = {pattern: positions for pattern, positions in patterns.items() if len(positions) > 1}
+
+    return repeating_patterns
+
+repeating_patterns = find_repeating_patterns(cipher_text)
+print(f'Repeating Patterns = {repeating_patterns}')
+print('=' * 30)
+
+def identify_distance_between_repeats(repeating_patterns):
+    distances = {}
+
+    for pattern, positions in repeating_patterns.items():
+        pattern_distances = []
+        for i in range(len(positions) - 1):
+            distance = positions[i + 1] - positions[i]
+            pattern_distances.append(distance)
+        distances[pattern] = pattern_distances
+
+    return distances
+
+distance_between_repeats = identify_distance_between_repeats(repeating_patterns)
+print(f'Distance Between Repeats = {distance_between_repeats}')
+print('=' * 30)
+
+def calculate_gcd(numbers):
+    if len(numbers) < 2:
+        raise ValueError("At least two numbers are required to calculate the GCD.")
+
+    return functools.reduce(math.gcd, numbers)
+
+distance_between_repeats_values_only = [item for row in distance_between_repeats.values() for item in row]
+gdc = calculate_gcd(distance_between_repeats_values_only)
+print(f'GDC = {gdc}')
+print('=' * 30)
+
+def calculate_index_of_coincidence(cipher_text: str):
+    total_characters = len(cipher_text)
 
     # Initialize a dictionary to count the frequency of each letter
     letter_count = {}
 
     # Count the occurrences of each letter in the text
-    for char in text:
+    for char in cipher_text:
         if char in letter_count:
             letter_count[char] += 1
         else:
@@ -24,40 +67,7 @@ def calculate_index_of_coincidence(text: str):
     for count in letter_count.values():
         ioc += (count * (count - 1)) / (total_characters * (total_characters - 1))
 
-    return ioc, letter_count
+    return ioc
 
-def divide_text_by_key_length(text: str, key_length: int):
-    text = re.sub(r'[^a-zA-Z]', '', text) # Only characters from a to z
-    return [text[i::key_length] for i in range(key_length)]
+# F
 
-def vigenere_crack(text: str):
-    divided_texts = divide_text_by_key_length(text, key_length=5)
-    possible_keys = []
-
-    # Find the keys for each divided text
-    for divided_text in divided_texts:
-        ioc = calculate_index_of_coincidence(divided_text)
-        most_common_letter = max(ioc[1], key=ioc[1].get)
-        best_letter_index = (ord(most_common_letter) - ord('a')) % 26
-        print(ALPHABET[best_letter_index])
-        possible_keys.append(ALPHABET[best_letter_index])
-
-    # Combine
-    vigenere_key = "".join(possible_keys)
-
-    return vigenere_key
-
-# Example usage:
-text = """
-Pc sp, rn bfe wk pv, ekwh zd wds hfhohzzq
-Svvekaf ktv Jcswhn we eka azyg pc jfibsi
-Eka Gctqcg ryg Wfizzo cw zxpfrrhkij Qrnhlyh,
-Kf kz wwyv Luig rrdebje d Osr zi pfffehsj,
-Lqz pp zslcjtqc seo wdsd?
-Hlhzzlp Ovrvhodvlua Vrxoah
-"""
-
-vigenere_key = vigenere_crack(text)
-decripted = decrypt(text, vigenere_key)
-print(vigenere_key)
-print(decripted)

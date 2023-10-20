@@ -1,52 +1,31 @@
-from consts import ALPHABET
+def generate_key(string, keyword):
+	keyword = list(keyword)
+	
+	if len(string) == len(keyword):
+		return keyword
+	else:
+		for i in range(len(string) -
+					len(keyword)):
+			keyword.append(keyword[i % len(keyword)])
+	
+	return ("" . join(keyword))
+	
+def cipher(text, key):
+	cipher_text = []
 
-def encrypt(plaintext: str, key: str):
-    plaintext = plaintext.lower()
-    key = key.lower()
+	for i in range(len(text)):
+		x = (ord(text[i]) + ord(key[i])) % 26
+		x += ord('A')
+		cipher_text.append(chr(x))	
 
-    ciphertext = ''
+	return ("".join(cipher_text))
+	
+def decipher(cipher_text, key):
+	orig_text = []
 
-    print("encrypt")
-    for i in range(len(plaintext)):
-        if __ignore_char(plaintext[i]):
-            ciphertext += plaintext[i]
-            continue
+	for i in range(len(cipher_text)):
+		x = (ord(cipher_text[i]) - ord(key[i]) + 26) % 26
+		x += ord('A')
+		orig_text.append(chr(x))
 
-        text_letter_index = ALPHABET.index(plaintext[i])
-        key_letter_index = ALPHABET.index(key[i % len(key)])
-        resulting_letter_index = (text_letter_index + key_letter_index) % 26
-        ciphertext += ALPHABET[resulting_letter_index]
-
-        print(f"{plaintext[i]} {key[i % len(key)]} = {ALPHABET[resulting_letter_index]}")
-    print()
-
-    return ciphertext
-
-def decrypt(ciphertext: str, key: str):
-    ciphertext = ciphertext.lower()
-    key = key.lower()
-
-    plaintext = ''
-
-    print("decrypt")
-    for i in range(len(ciphertext)):
-        if __ignore_char(ciphertext[i]):
-             plaintext += ciphertext[i]
-             continue
-
-        text_letter_index = ALPHABET.index(ciphertext[i])
-        key_letter_index = ALPHABET.index(key[i % len(key)])
-        resulting_letter_index = (text_letter_index - key_letter_index) % 26
-        plaintext += ALPHABET[resulting_letter_index]
-
-        print(f"{plaintext[i]} {key[i % len(key)]} = {ALPHABET[resulting_letter_index]}")
-    print()
-
-    return plaintext
-
-def __ignore_char(char: str):
-    space = char == ' '
-    numeric = char.isnumeric()
-    special = char in 'ç!@#$%^&*()-+.,'
-
-    return space or numeric or special
+	return ("" . join(orig_text))
