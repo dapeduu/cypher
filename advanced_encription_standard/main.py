@@ -1,9 +1,16 @@
-def padding(text: str, block_size: int):
+def padding(text: str, block_size: int) -> bytes:
     """
     Dividir o texto em blocos de 16 bytes ou 128 bits.
     """ 
-    padded_text = ""
-
+    # Transforma o texto em bytes
+    text = bytes(text)
+    # Calcula o numero de bytes
+    padding_size = block_size - (len(text) % block_size)
+    # Cria um byte com o tamanho correto
+    padding = bytes([padding_size] * padding_size)
+    # Adiciona o padding ao texto original
+    padded_text = text + padding
+    
     return padded_text
 
 def key_expansion(key: str):
@@ -11,7 +18,7 @@ def key_expansion(key: str):
     Recebe a chave e gera outras
     de acordo com a tabela abaixo:
 
-    | Tamanho da Chave (bits) | Quantidade de Rounds |
+    | Tamanho da Chave (bits) | Quantidade de Rounds  |
     |-------------------------|-----------------------|
     | 128                     | 10                    |
     | 192                     | 12                    |
@@ -56,5 +63,5 @@ def mix_columns(cipher_text: str):
 
     return columns_mixed
 
-padded = padding("""aaaaaaaaaaaaaaaaaaaaaaasdasdasdaagfsgfdgdfgaaaaaaaaaaaaaaaaaaaaaaaaa""",16)
+padded = padding(b"""aaaaaaaaaaaaaaaaaaaaaaasdasdasdaagfsgfdgdfgaaaaaaaaaaaaaaaaaaaaaaaaa""",16)
 print(padded)
