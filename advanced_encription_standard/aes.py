@@ -1,16 +1,14 @@
 from dataclasses import dataclass
+from consts import S_BOX
 class AES:
     def __init__(self, key: str, text: str, rounds: int):
-        self.key = bytearray.fromhex(key)
-        self.text = bytearray.fromhex(text)
-        self.rounds = rounds
+        self.key: bytes = bytearray.fromhex(key)
+        self.text: bytes = bytearray.fromhex(text)
+        self.rounds: int = rounds
     
     def encript(self):
         state = self.__get_state()
-        recovered = self.__get_bytes(state)
 
-        print(state)
-        print(recovered)
         pass        
 
     def decript(self):
@@ -18,11 +16,67 @@ class AES:
 
     ### Metodos privados
 
-    def __get_state(self) -> [[int]]:
+    def __key_expansion(self, rounds: int = 1) -> [[[int]]]:
+        """"
+        Gera as varias chaves para usar nos rounds
+
+        """
+        nk = len(self.key)
+        number_of_words: int = 4
+        first_key_matrix = self.__get_state(self.key)
+        range_value = range(nk, number_of_words * (rounds + 1) ) 
+        result = [first_key_matrix]
+
+        for round_number in range_value:
+            temp = first_key_matrix[round_number - 1]
+            
+            if round_number % nk == 0:
+                first_bytes = self.__sub_word(self.__word_rotation(temp))
+                second_bytes = self.__round_constant(round_number // nk)
+                temp = self.__xor_bytes(first_bytes, second_bytes)
+            elif nk > 6 & round_number % nk == 4:
+                temp = self.__sub_word(temp)
+
+            result.append(xor_bytes(result[round_number - nk], temp))
+
+        return result
+
+    def __round_constant(self, i: int):
+        """
+
+        https://en.wikipedia.org/wiki/AES_key_schedule 
+        """
+        lookup_bytes = bytearray.fromhex('01020408102040801b36')
+        return bytes([rcon_lookup[i-1], 0, 0, 0])
+
+    def __sub_word(self, word: [int]):
+        """
+        Substitui os bytes pelos bytes definidos na SBOX
+        https://en.wikipedia.org/wiki/Rijndael_S-box
+        """
+        return bytes(S_BOX[i] for i in word)
+
+    def __xor_bytes(self, bytes_a: bytes, bytes_b: bytes):
+        """
+        Faz o XOR entre os bytes
+        https://en.wikipedia.org/wiki/Exclusive_or
+        """
+        return bytes([x ^ y for (x, y) in zip(bytes_a, bytes_b)])
+
+    def __word_rotation(self, word: [int]) -> [int]:
+        """
+        Faz uma rotação na word. Exemplo:
+        
+        [0x00, 0x01, 0x02, 0x03]
+        A word acima vira:
+        [0x01, 0x02, 0x03, 0x00]
+        """
+        return [word[1:] + word[:1]]
+
+
+    def __get_state(self, data: bytes) -> [[int]]:
         """
         Divide os 16 bytes bytes em uma matrix 4x4. Exemplo:
-
-        
 
         O array acima vira a matrix abaixo:
 
@@ -33,7 +87,6 @@ class AES:
             [0x0C, 0x0D, 0x0E, 0x0F]
         ]
         """
-        data = self.text
         state = []
 
         for i in range(0, len(data), 4):
@@ -60,6 +113,7 @@ class AES:
         """
         result = []
         size = range(len(state))
+
         for line in size:
             for column in size:
                 result.append(state[line][column])
