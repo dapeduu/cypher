@@ -254,6 +254,9 @@ class AES:
         state[3][3], state[0][3], state[1][3], state[2][3] = state[0][3], state[1][3], state[2][3], state[3][3]
 
     def __inv_sub_bytes(self, state: [[int]]) -> [[int]]:
+        """
+        Faz a substituição de bytes usando a SBOX inversa
+        """
         for row in range(len(state)):
             state[row] = [INVERSE_S_BOX[state[row][col]] for col in range(len(state[0]))]
 
@@ -277,19 +280,21 @@ class AES:
         # 0x09 = 9  = b1001 = ((x*2)*2)*2+x
         return self.__xtime(self.__xtime(self.__xtime(b))) ^ b
 
-
-    def __inv_mix_column(self, col: [int]):
-        c_0, c_1, c_2, c_3 = col[0], col[1], col[2], col[3]
-
-        col[0] = self.__xtimes_0e(c_0) ^ self.__xtimes_0b(c_1) ^ self.__xtimes_0d(c_2) ^ self.__xtimes_09(c_3)
-        col[1] = self.__xtimes_09(c_0) ^ self.__xtimes_0e(c_1) ^ self.__xtimes_0b(c_2) ^ self.__xtimes_0d(c_3)
-        col[2] = self.__xtimes_0d(c_0) ^ self.__xtimes_09(c_1) ^ self.__xtimes_0e(c_2) ^ self.__xtimes_0b(c_3)
-        col[3] = self.__xtimes_0b(c_0) ^ self.__xtimes_0d(c_1) ^ self.__xtimes_09(c_2) ^ self.__xtimes_0e(c_3)
-
-
     def __inv_mix_columns(self, state: [[int]]) -> [[int]]:
+        """
+        Faz a mixagem de colunas inversa. Exemplo:
+
+        8e 4d a1 bc -> db 13 53 45
+
+        https://en.wikipedia.org/wiki/Rijndael_MixColumns
+        """
         for row in state:
-            self.__inv_mix_column(row)
+            c_0, c_1, c_2, c_3 = row[0], row[1], row[2], row[3]
+
+            row[0] = self.__xtimes_0e(c_0) ^ self.__xtimes_0b(c_1) ^ self.__xtimes_0d(c_2) ^ self.__xtimes_09(c_3)
+            row[1] = self.__xtimes_09(c_0) ^ self.__xtimes_0e(c_1) ^ self.__xtimes_0b(c_2) ^ self.__xtimes_0d(c_3)
+            row[2] = self.__xtimes_0d(c_0) ^ self.__xtimes_09(c_1) ^ self.__xtimes_0e(c_2) ^ self.__xtimes_0b(c_3)
+            row[3] = self.__xtimes_0b(c_0) ^ self.__xtimes_0d(c_1) ^ self.__xtimes_09(c_2) ^ self.__xtimes_0e(c_3)
 
 if __name__ == "__main__":
     cipher = AES(key='000102030405060708090a0b0c0d0e0f', text='00112233445566778899aabbccddeeff', rounds=10)
