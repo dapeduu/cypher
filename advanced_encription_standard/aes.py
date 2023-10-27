@@ -6,44 +6,69 @@ class AES:
         self.text: bytes = bytearray.fromhex(text)
         self.rounds: int = rounds
     
-    def encript(self):
-        state = self.__get_state()
+    def aes_encryption(self) -> bytes:
+        state = self.__get_state(self.text)
+        key_schedule = self.__key_expansion(self.rounds)
+        self.__add_round_key(state, key_schedule, round=0)
 
-        pass        
+        for round in range(1, self.rounds):
+            sub_bytes(state)
+            shift_rows(state)
+            mix_columns(state)
+            add_round_key(state, key_schedule, round)
+
+        sub_bytes(state)
+        shift_rows(state)
+        add_round_key(state, key_schedule, round=self.rounds)
+
+        cipher = bytes_from_state(state)
+        return cipher
+
 
     def decript(self):
         pass
 
     ### Metodos privados
 
+    
+
+    def __add_round_key(self, state: [[int]], key_schedule: [[[int]]], round: int):
+        """
+        Fazendo o bitwise XOR entre o stado e a chave
+        """
+        round_key = key_schedule[round]
+        range_value = range(len(state))
+        for r in range_value:
+            for c in range(len(state[0])):
+                state[r] = [state[r][c] ^ round_key[r][c]]
+
     def __key_expansion(self, rounds: int = 1) -> [[[int]]]:
         """"
         Gera as varias chaves para usar nos rounds
-
+        https://en.wikipedia.org/wiki/AES_key_schedule 
         """
-        nk = len(self.key)
+        key_length = len(self.key)
         number_of_words: int = 4
         first_key_matrix = self.__get_state(self.key)
-        range_value = range(nk, number_of_words * (rounds + 1) ) 
+        range_value = range(key_length, number_of_words * (rounds + 1)) 
         result = [first_key_matrix]
 
         for round_number in range_value:
             temp = first_key_matrix[round_number - 1]
             
-            if round_number % nk == 0:
+            if round_number % key_length == 0:
                 first_bytes = self.__sub_word(self.__word_rotation(temp))
-                second_bytes = self.__round_constant(round_number // nk)
+                second_bytes = self.__round_constant(round_number // key_length)
                 temp = self.__xor_bytes(first_bytes, second_bytes)
-            elif nk > 6 & round_number % nk == 4:
+            elif key_length > 6 & round_number % key_length == 4:
                 temp = self.__sub_word(temp)
 
-            result.append(xor_bytes(result[round_number - nk], temp))
+            result.append(xor_bytes(result[round_number - key_length], temp))
 
         return result
 
     def __round_constant(self, i: int):
         """
-
         https://en.wikipedia.org/wiki/AES_key_schedule 
         """
         lookup_bytes = bytearray.fromhex('01020408102040801b36')
@@ -77,6 +102,8 @@ class AES:
     def __get_state(self, data: bytes) -> [[int]]:
         """
         Divide os 16 bytes bytes em uma matrix 4x4. Exemplo:
+
+        [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
 
         O array acima vira a matrix abaixo:
 
@@ -122,7 +149,8 @@ class AES:
 
 if __name__ == "__main__":
     cipher = AES(key='000102030405060708090a0b0c0d0e0f', text='00112233445566778899aabbccddeeff', rounds=1)
-    cipher.encript()
+    enprited = cipher.encript()
+    decripted = cipher.encript()
 
     # expected_ciphertext = bytearray.fromhex('69c4e0d86a7b0430d8cdb78070b4c55a')
     # ciphertext = aes_encryption(plaintext, key)
