@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 from consts import S_BOX, INVERSE_S_BOX
 class AES:
-    def __init__(self, key: str, text: str, rounds: int):
-        self.key: bytes = bytearray.fromhex(key)
-        self.text: bytes = bytearray.fromhex(text)
+    def __init__(self, key: bytes, rounds: int):
+        self.key: bytes = key
         self.rounds: int = rounds
     
-    def encript(self) -> bytes:
-        state = self.__get_state(self.text)
+    def encript(self, text: bytes) -> bytes:
+        state = self.__get_state(text)
         key_schedule = self.__key_expansion(self.rounds)
         self.__add_round_key(state, key_schedule, round=0)
 
@@ -24,7 +23,6 @@ class AES:
         cipher = self.__get_bytes(state)
 
         return cipher
-
 
     def decript(self, cipher_text: bytes) -> bytes:
         state = self.__get_state(cipher_text)
@@ -46,6 +44,9 @@ class AES:
         return text
 
     ### Metodos privados
+
+    def __pad(self, text: bytes):
+        """Divide um text maior que 128bits em pedaços"""
 
     def __xtime(self, byte: int) -> int:
         """
@@ -260,21 +261,17 @@ class AES:
         for row in range(len(state)):
             state[row] = [INVERSE_S_BOX[state[row][col]] for col in range(len(state[0]))]
 
-
     def __xtimes_0e(self, b):
         # 0x0e = 14 = b1110 = ((x * 2 + x) * 2 + x) * 2
         return self.__xtime(self.__xtime(self.__xtime(b) ^ b) ^ b)
-
 
     def __xtimes_0b(self, b):
         # 0x0b = 11 = b1011 = ((x*2)*2+x)*2+x
         return self.__xtime(self.__xtime(self.__xtime(b)) ^ b) ^ b
 
-
     def __xtimes_0d(self, b):
         # 0x0d = 13 = b1101 = ((x*2+x)*2)*2+x
         return self.__xtime(self.__xtime(self.__xtime(b) ^ b)) ^ b
-
 
     def __xtimes_09(self, b):
         # 0x09 = 9  = b1001 = ((x*2)*2)*2+x
@@ -297,11 +294,13 @@ class AES:
             row[3] = self.__xtimes_0b(c_0) ^ self.__xtimes_0d(c_1) ^ self.__xtimes_09(c_2) ^ self.__xtimes_0e(c_3)
 
 if __name__ == "__main__":
-    cipher = AES(key='000102030405060708090a0b0c0d0e0f', text='00112233445566778899aabbccddeeff', rounds=10)
-    encripted = cipher.encript()
+    text = bytearray.fromhex('00112233445566778899aabbccddeeff')
+    key = bytearray.fromhex('000102030405060708090a0b0c0d0e0f')
+    
+    cipher = AES(key, rounds=10)
+    encripted = cipher.encript(text)
     decripted = cipher.decript(encripted)
     expected_ciphertext = bytearray.fromhex('69c4e0d86a7b0430d8cdb78070b4c55a')
-    expected_text = bytearray.fromhex('00112233445566778899aabbccddeeff')
 
     assert (encripted == expected_ciphertext)
-    assert (decripted == expected_text)
+    assert (decripted == text)
