@@ -6,22 +6,23 @@ class AES:
         self.text: bytes = bytearray.fromhex(text)
         self.rounds: int = rounds
     
-    def aes_encryption(self) -> bytes:
+    def encript(self) -> bytes:
         state = self.__get_state(self.text)
         key_schedule = self.__key_expansion(self.rounds)
         self.__add_round_key(state, key_schedule, round=0)
 
         for round in range(1, self.rounds):
-            sub_bytes(state)
-            shift_rows(state)
-            mix_columns(state)
-            add_round_key(state, key_schedule, round)
+            self.__sub_bytes(state)
+            self.__shift_rows(state)
+            self.__mix_columns(state)
+            self.__add_round_key(state, key_schedule, round)
 
-        sub_bytes(state)
-        shift_rows(state)
-        add_round_key(state, key_schedule, round=self.rounds)
+        self.__sub_bytes(state)
+        self.__shift_rows(state)
+        self.__add_round_key(state, key_schedule, round=self.rounds)
 
-        cipher = bytes_from_state(state)
+        cipher = self.__get_bytes(state)
+        
         return cipher
 
 
@@ -30,31 +31,94 @@ class AES:
 
     ### Metodos privados
 
+    def __xtime(self, byte: int) -> int:
+        """
+        Exemplo:
+
+        TODO:Encontrar bom exemplo
+        """
+        if byte & 0x80:
+            return ((byte << 1) ^ 0x1b) & 0xff
+        return byte << 1
+
+    def __mix_columns(self, state: [int]):
+        """
+        Faz a mixagem de colunas. Exemplo:
+
+        db 13 53 45 -> 8e 4d a1 bc
+
+        https://en.wikipedia.org/wiki/Rijndael_MixColumns
+        """
+        for row in state:
+            first_col = row[0]
+            all_xor = row[0] ^ row[1] ^ row[2] ^ row[3]
+            row[0] ^= all_xor ^ self.__xtime(row[0] ^ row[1])
+            row[1] ^= all_xor ^ self.__xtime(row[1] ^ row[2])
+            row[2] ^= all_xor ^ self.__xtime(row[2] ^ row[3])
+            row[3] ^= all_xor ^ self.__xtime(first_col ^ row[3])
+
+    def __shift_rows(self, state: [[int]]):
+        """
+        Faz uma rotação de todo o estado, semelhante ao que fazemos em rotate_word
+        [
+            [0x00, 0x01, 0x02, 0x03],
+            [0x04, 0x05, 0x06, 0x07],
+            [0x08, 0x09, 0x0A, 0x0B],
+            [0x0C, 0x0D, 0x0E, 0x0F]
+        ]
+
+        A matrix acima, vira a matrix abaixo:
+
+        [
+            [0x00, 0x01, 0x02, 0x03],
+            [0x05, 0x06, 0x07, 0x04],
+            [0x0A, 0x0B, 0x08, 0x09],
+            [0x0F, 0x0C, 0x0D, 0x0E]
+        ]
+
+        Obs: não retorna nada pois estamos modificando a referencia do estado
+        """
+        state[0][1], state[1][1], state[2][1], state[3][1] = state[1][1], state[2][1], state[3][1], state[0][1]
+        state[0][2], state[1][2], state[2][2], state[3][2] = state[2][2], state[3][2], state[0][2], state[1][2]
+        state[0][3], state[1][3], state[2][3], state[3][3] = state[3][3], state[0][3], state[1][3], state[2][3]
     
+    def __sub_bytes(self, state: [[int]]):
+        """
+        Substituindo os bytes pelos valores da SBOX
+
+        Obs: não retorna nada pois estamos modificando a referencia do estado
+        """
+        for row in range(len(state)):
+            state[row] = [S_BOX[state[row][col]] for col in range(len(state[0]))]
+
 
     def __add_round_key(self, state: [[int]], key_schedule: [[[int]]], round: int):
         """
         Fazendo o bitwise XOR entre o stado e a chave
+
+        Obs: não retorna nada pois estamos modificando a referencia do estado
         """
         round_key = key_schedule[round]
         range_value = range(len(state))
-        for r in range_value:
-            for c in range(len(state[0])):
-                state[r] = [state[r][c] ^ round_key[r][c]]
+        for row in range_value:
+            result = [] 
 
+            for col in range(len(state[0])):
+                result.append(state[row][col] ^ round_key[row][col])
+
+            state[row] = result
     def __key_expansion(self, rounds: int = 1) -> [[[int]]]:
         """"
         Gera as varias chaves para usar nos rounds
         https://en.wikipedia.org/wiki/AES_key_schedule 
         """
-        key_length = len(self.key)
+        key_length = len(self.key) // 4
         number_of_words: int = 4
-        first_key_matrix = self.__get_state(self.key)
+        key_matrix = self.__get_state(self.key)
         range_value = range(key_length, number_of_words * (rounds + 1)) 
-        result = [first_key_matrix]
 
         for round_number in range_value:
-            temp = first_key_matrix[round_number - 1]
+            temp = key_matrix[round_number - 1]
             
             if round_number % key_length == 0:
                 first_bytes = self.__sub_word(self.__word_rotation(temp))
@@ -63,16 +127,16 @@ class AES:
             elif key_length > 6 & round_number % key_length == 4:
                 temp = self.__sub_word(temp)
 
-            result.append(xor_bytes(result[round_number - key_length], temp))
+            key_matrix.append(self.__xor_bytes(key_matrix[round_number - key_length], temp))
 
-        return result
+        return [key_matrix[i*4:(i+1)*4] for i in range(len(key_matrix) // 4)]
 
     def __round_constant(self, i: int):
         """
         https://en.wikipedia.org/wiki/AES_key_schedule 
         """
         lookup_bytes = bytearray.fromhex('01020408102040801b36')
-        return bytes([rcon_lookup[i-1], 0, 0, 0])
+        return bytes([lookup_bytes[i-1], 0, 0, 0])
 
     def __sub_word(self, word: [int]):
         """
@@ -96,7 +160,7 @@ class AES:
         A word acima vira:
         [0x01, 0x02, 0x03, 0x00]
         """
-        return [word[1:] + word[:1]]
+        return word[1:] + word[:1]
 
 
     def __get_state(self, data: bytes) -> [[int]]:
@@ -148,13 +212,12 @@ class AES:
         return bytes(result)
 
 if __name__ == "__main__":
-    cipher = AES(key='000102030405060708090a0b0c0d0e0f', text='00112233445566778899aabbccddeeff', rounds=1)
+    cipher = AES(key='000102030405060708090a0b0c0d0e0f', text='00112233445566778899aabbccddeeff', rounds=10)
     enprited = cipher.encript()
     decripted = cipher.encript()
-
-    # expected_ciphertext = bytearray.fromhex('69c4e0d86a7b0430d8cdb78070b4c55a')
+    expected_ciphertext = bytearray.fromhex('69c4e0d86a7b0430d8cdb78070b4c55a')
     # ciphertext = aes_encryption(plaintext, key)
     # recovered_plaintext = aes_decryption(ciphertext, key)
 
-    # assert (ciphertext == expected_ciphertext)
+    assert (enprited == expected_ciphertext)
     # assert (recovered_plaintext == plaintext)
