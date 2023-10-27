@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from consts import S_BOX
+from consts import S_BOX, INVERSE_S_BOX
 class AES:
     def __init__(self, key: str, text: str, rounds: int):
         self.key: bytes = bytearray.fromhex(key)
@@ -22,12 +22,28 @@ class AES:
         self.__add_round_key(state, key_schedule, round=self.rounds)
 
         cipher = self.__get_bytes(state)
-        
+
         return cipher
 
 
-    def decript(self):
-        pass
+    def decript(self, cipher_text: bytes) -> bytes:
+        state = self.__get_state(cipher_text)
+        key_schedule = self.__key_expansion(self.rounds)
+        self.__add_round_key(state, key_schedule, round=self.rounds)
+
+        for round in range(self.rounds - 1, 0, -1):
+            self.__inv_shift_rows(state)
+            self.__inv_sub_bytes(state)
+            self.__add_round_key(state, key_schedule, round)
+            self.__inv_mix_columns(state)
+
+        self.__inv_shift_rows(state)
+        self.__inv_sub_bytes(state)
+        self.__add_round_key(state, key_schedule, round=0)
+
+        text = self.__get_bytes(state)
+
+        return text
 
     ### Metodos privados
 
@@ -91,7 +107,6 @@ class AES:
         for row in range(len(state)):
             state[row] = [S_BOX[state[row][col]] for col in range(len(state[0]))]
 
-
     def __add_round_key(self, state: [[int]], key_schedule: [[[int]]], round: int):
         """
         Fazendo o bitwise XOR entre o stado e a chave
@@ -107,6 +122,7 @@ class AES:
                 result.append(state[row][col] ^ round_key[row][col])
 
             state[row] = result
+    
     def __key_expansion(self, rounds: int = 1) -> [[[int]]]:
         """"
         Gera as varias chaves para usar nos rounds
@@ -162,7 +178,6 @@ class AES:
         """
         return word[1:] + word[:1]
 
-
     def __get_state(self, data: bytes) -> [[int]]:
         """
         Divide os 16 bytes bytes em uma matrix 4x4. Exemplo:
@@ -211,13 +226,77 @@ class AES:
 
         return bytes(result)
 
+    ### Inversas
+
+    def __inv_shift_rows(self, state: [[int]]) -> [[int]]:
+        """
+        Faz uma rotação de todo o estado, semelhante ao que fazemos em rotate_word
+        [
+            [0x00, 0x01, 0x02, 0x03],
+            [0x05, 0x06, 0x07, 0x04],
+            [0x0A, 0x0B, 0x08, 0x09],
+            [0x0F, 0x0C, 0x0D, 0x0E]
+        ]
+
+        A matrix acima, vira a matrix abaixo:
+
+        [
+            [0x00, 0x01, 0x02, 0x03],
+            [0x04, 0x05, 0x06, 0x07],
+            [0x08, 0x09, 0x0A, 0x0B],
+            [0x0C, 0x0D, 0x0E, 0x0F]
+        ]
+
+        Obs: não retorna nada pois estamos modificando a referencia do estado
+        """
+        state[1][1], state[2][1], state[3][1], state[0][1] = state[0][1], state[1][1], state[2][1], state[3][1]
+        state[2][2], state[3][2], state[0][2], state[1][2] = state[0][2], state[1][2], state[2][2], state[3][2]
+        state[3][3], state[0][3], state[1][3], state[2][3] = state[0][3], state[1][3], state[2][3], state[3][3]
+
+    def __inv_sub_bytes(self, state: [[int]]) -> [[int]]:
+        for row in range(len(state)):
+            state[row] = [INVERSE_S_BOX[state[row][col]] for col in range(len(state[0]))]
+
+
+    def __xtimes_0e(self, b):
+        # 0x0e = 14 = b1110 = ((x * 2 + x) * 2 + x) * 2
+        return self.__xtime(self.__xtime(self.__xtime(b) ^ b) ^ b)
+
+
+    def __xtimes_0b(self, b):
+        # 0x0b = 11 = b1011 = ((x*2)*2+x)*2+x
+        return self.__xtime(self.__xtime(self.__xtime(b)) ^ b) ^ b
+
+
+    def __xtimes_0d(self, b):
+        # 0x0d = 13 = b1101 = ((x*2+x)*2)*2+x
+        return self.__xtime(self.__xtime(self.__xtime(b) ^ b)) ^ b
+
+
+    def __xtimes_09(self, b):
+        # 0x09 = 9  = b1001 = ((x*2)*2)*2+x
+        return self.__xtime(self.__xtime(self.__xtime(b))) ^ b
+
+
+    def __inv_mix_column(self, col: [int]):
+        c_0, c_1, c_2, c_3 = col[0], col[1], col[2], col[3]
+
+        col[0] = self.__xtimes_0e(c_0) ^ self.__xtimes_0b(c_1) ^ self.__xtimes_0d(c_2) ^ self.__xtimes_09(c_3)
+        col[1] = self.__xtimes_09(c_0) ^ self.__xtimes_0e(c_1) ^ self.__xtimes_0b(c_2) ^ self.__xtimes_0d(c_3)
+        col[2] = self.__xtimes_0d(c_0) ^ self.__xtimes_09(c_1) ^ self.__xtimes_0e(c_2) ^ self.__xtimes_0b(c_3)
+        col[3] = self.__xtimes_0b(c_0) ^ self.__xtimes_0d(c_1) ^ self.__xtimes_09(c_2) ^ self.__xtimes_0e(c_3)
+
+
+    def __inv_mix_columns(self, state: [[int]]) -> [[int]]:
+        for row in state:
+            self.__inv_mix_column(row)
+
 if __name__ == "__main__":
     cipher = AES(key='000102030405060708090a0b0c0d0e0f', text='00112233445566778899aabbccddeeff', rounds=10)
-    enprited = cipher.encript()
-    decripted = cipher.encript()
+    encripted = cipher.encript()
+    decripted = cipher.decript(encripted)
     expected_ciphertext = bytearray.fromhex('69c4e0d86a7b0430d8cdb78070b4c55a')
-    # ciphertext = aes_encryption(plaintext, key)
-    # recovered_plaintext = aes_decryption(ciphertext, key)
+    expected_text = bytearray.fromhex('00112233445566778899aabbccddeeff')
 
-    assert (enprited == expected_ciphertext)
-    # assert (recovered_plaintext == plaintext)
+    assert (encripted == expected_ciphertext)
+    assert (decripted == expected_text)
