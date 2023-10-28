@@ -45,9 +45,6 @@ class AES:
 
     ### Metodos privados
 
-    def __pad(self, text: bytes):
-        """Divide um text maior que 128bits em pedaços"""
-
     def __xtime(self, byte: int) -> int:
         """
         Exemplo:
