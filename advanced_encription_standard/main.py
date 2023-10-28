@@ -8,9 +8,9 @@ def pad(text: bytes):
     last_bit_len = len(byte_split[-1])
 
     if last_bit_len != 16:
-        # Preenche o ultimo array com bits aleatorios
+        # Preenche o ultimo array com o ultimo byte
         number_of_missing_bytes = 16 - last_bit_len
-        last_byte = byte_split[-1][-1:] * 13
+        last_byte = byte_split[-1][-1:] * number_of_missing_bytes
         
         byte_split[-1] = byte_split[-1] + last_byte
 
