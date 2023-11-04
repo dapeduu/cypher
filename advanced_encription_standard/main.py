@@ -18,71 +18,84 @@ def pad(text: bytes) -> ([bytes], int):
     return byte_split, number_of_missing_bytes
 
 if __name__ == "__main__":
-    # Modo CTR teste
-    text: str = 'qwertyuiopasdfghqwertyuiopasdfghabc' # input('Insira um texto para ser cifrado: ')
-    key: str = 'asdfghjklzxcvbnm' # input('Insira uma chave (16 caracteres): ')
-    rounds: int = 10 # input('Insira a quantidade de rounds: ')
-    
-    if len(text) < 16:
-        raise ValueError("O texto deve ter mais que 16 characteres.")
-    
-    if len(key) != 16:
-        raise ValueError("A chave deve ter 16 caracteres.")
+    user_file_input = input("Digite o caminho do arquivo a ser cifrado: ") or 'input.txt'
+    key: str = input('Insira uma chave (16 caracteres): ') or 'asdfghjklzxcvbnm' 
+    rounds: int = input('Insira a quantidade de rounds: ') or 10
 
-    # Converte ambos em byte arrays
-    text: bytes = bytearray.fromhex(text.encode('utf-8').hex())
-    key: bytes = bytearray.fromhex(key.encode('utf-8').hex())
+    file_path = os.path.join(os.path.dirname(__file__), user_file_input)
 
-    # Faz o padding do texto caso seja maior 
-    padded, pad_value = pad(text)
-    
-    # Encripta e desencripta
-    cryptodome_aes = Crypto_AES.new(key=key, mode=Crypto_AES.MODE_ECB)
-    cipher: AES = AES(key, rounds=10)
+    with open(file_path) as input_file:
+        file_bytes = input_file.read()
+        
+        if len(file_bytes) < 16:
+            raise ValueError("O texto deve ter mais que 16 characteres.")
+        
+        if len(key) != 16:
+            raise ValueError("A chave deve ter 16 caracteres.")
 
-    encripted_result: [bytes] = []
-    decripted_result: [bytes] = []
-    final_decripted_result: bytes = b''
-    final_encripted_result: bytes = b''
+        # Converte ambos em byte arrays
+        text: bytes = bytearray.fromhex(file_bytes.encode('utf-8').hex())
+        key: bytes = bytearray.fromhex(key.encode('utf-8').hex())
 
-    cryptodome_encripted_result: [bytes] = []
-    cryptodome_decripted_result: [bytes] = []
-    cryptodome_final_decripted_result: bytes = b''
-    cryptodome_final_encripted_result: bytes = b''
+        # Faz o padding do texto caso seja maior 
+        padded, pad_value = pad(text)
+        
+        # Encripta e desencripta
+        cryptodome_aes = Crypto_AES.new(key=key, mode=Crypto_AES.MODE_ECB)
+        cipher: AES = AES(key, rounds=10)
 
-    for x in padded:
-        # Nossa implementação
-        encripted = cipher.encript(x)
-        decripted = cipher.decript(encripted)
+        encripted_result: [bytes] = []
+        decripted_result: [bytes] = []
+        final_decripted_result: bytes = b''
+        final_encripted_result: bytes = b''
 
-        # Implementação do cryptodome
-        cryptodome_encripted = cryptodome_aes.encrypt(x)
-        cryptodome_decripted_value = cryptodome_aes.decrypt(cryptodome_encripted)
+        cryptodome_encripted_result: [bytes] = []
+        cryptodome_decripted_result: [bytes] = []
+        cryptodome_final_decripted_result: bytes = b''
+        cryptodome_final_encripted_result: bytes = b''
 
-        # Tranformamos em bytearray pra poder lidar melhor dps
-        encripted_result.append(encripted) 
-        decripted_result.append(decripted)
+        for x in padded:
+            # Nossa implementação
+            encripted = cipher.encript(x)
+            decripted = cipher.decript(encripted)
 
-        cryptodome_encripted_result.append(cryptodome_encripted)
-        cryptodome_decripted_result.append(cryptodome_decripted_value)
+            # Implementação do cryptodome
+            cryptodome_encripted = cryptodome_aes.encrypt(x)
+            cryptodome_decripted_value = cryptodome_aes.decrypt(cryptodome_encripted)
 
-    # Monta os bytes novamente
-    for value, cryptodome_value in zip(encripted_result, cryptodome_encripted_result):
-        final_encripted_result += value
-        cryptodome_final_encripted_result += cryptodome_value
-    
-     
-    for value, cryptodome_value in zip(decripted_result, cryptodome_decripted_result):
-        final_decripted_result += value  
-        cryptodome_final_decripted_result += cryptodome_value
+            # Tranformamos em bytearray pra poder lidar melhor dps
+            encripted_result.append(encripted) 
+            decripted_result.append(decripted)
 
-    # Retira o valor acrescentado no pad
-    final_decripted_result = final_decripted_result[:-pad_value]
-    final_encripted_result = final_encripted_result[:-pad_value]
-    cryptodome_final_decripted_result = cryptodome_final_decripted_result[:-pad_value]
-    cryptodome_final_encripted_result = cryptodome_final_encripted_result[:-pad_value]
+            cryptodome_encripted_result.append(cryptodome_encripted)
+            cryptodome_decripted_result.append(cryptodome_decripted_value)
 
-    # Garantes que a nossa implementação está como a do cryptodome
-    assert(final_decripted_result == cryptodome_final_decripted_result)
-    assert(final_encripted_result == cryptodome_final_encripted_result)
+        # Monta os bytes novamente
+        for value, cryptodome_value in zip(encripted_result, cryptodome_encripted_result):
+            final_encripted_result += value
+            cryptodome_final_encripted_result += cryptodome_value
+        
+        
+        for value, cryptodome_value in zip(decripted_result, cryptodome_decripted_result):
+            final_decripted_result += value  
+            cryptodome_final_decripted_result += cryptodome_value
+
+        # Retira o valor acrescentado no pad
+        final_decripted_result = final_decripted_result[:-pad_value]
+        final_encripted_result = final_encripted_result[:-pad_value]
+        cryptodome_final_decripted_result = cryptodome_final_decripted_result[:-pad_value]
+        cryptodome_final_encripted_result = cryptodome_final_encripted_result[:-pad_value]
+
+        # Mostra os resultados
+        print(('=' * 40) + 'Nossa implementação' + ('=' * 40))
+        print(final_encripted_result)
+        print(final_decripted_result)
+        
+        print(('=' * 40) + 'Cryptodome' + ('=' * 40))
+        print(cryptodome_final_encripted_result)
+        print(cryptodome_final_decripted_result)
+
+        # Garantes que a nossa implementação está como a do cryptodome
+        assert(final_decripted_result == cryptodome_final_decripted_result)
+        assert(final_encripted_result == cryptodome_final_encripted_result)
 
