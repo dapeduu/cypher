@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 from consts import S_BOX, INVERSE_S_BOX
+from enum import Enum
+
 class AES:
     def __init__(self, key: bytes, rounds: int):
         self.key: bytes = key
         self.rounds: int = rounds
+        
     
     def encript(self, text: bytes) -> bytes:
         state = self.__get_state(text)
@@ -290,14 +293,3 @@ class AES:
             row[2] = self.__xtimes_0d(c_0) ^ self.__xtimes_09(c_1) ^ self.__xtimes_0e(c_2) ^ self.__xtimes_0b(c_3)
             row[3] = self.__xtimes_0b(c_0) ^ self.__xtimes_0d(c_1) ^ self.__xtimes_09(c_2) ^ self.__xtimes_0e(c_3)
 
-if __name__ == "__main__":
-    text = bytearray.fromhex('00112233445566778899aabbccddeeff')
-    key = bytearray.fromhex('000102030405060708090a0b0c0d0e0f')
-    
-    cipher = AES(key, rounds=10)
-    encripted = cipher.encript(text)
-    decripted = cipher.decript(encripted)
-    expected_ciphertext = bytearray.fromhex('69c4e0d86a7b0430d8cdb78070b4c55a')
-
-    assert (encripted == expected_ciphertext)
-    assert (decripted == text)
