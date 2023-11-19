@@ -24,14 +24,11 @@ O projeto está dividido em três partes principais:
 # Como Usar
 
 1. **Geração de Chaves:**
-   ```bash
-   python key_generator.py
-   ```
-   Isso gerará um par de chaves (pública e privada) e salvará os resultados em arquivos.
+   A função `generate_prime_number` em `key_generator.py` gerará um par de chaves (pública e privada) e salvará os resultados em arquivos.
 
 2. **Assinatura:**
    ```bash
-   python sign.py -m <arquivo_mensagem> -k <chave_privada> -o <arquivo_assinatura>
+   python sign.py
    ```
    Assina a mensagem e salva a assinatura em um arquivo.
 
