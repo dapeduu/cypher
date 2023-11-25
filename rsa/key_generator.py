@@ -51,7 +51,7 @@ def generate_prime_candidate(length: int):
 
 def generate_prime_number(length: int = 1024):
     """ 
-    Gera números aleatórios até que passem no teste de Miller-Rabin
+    Gera números aleatórios até que um passe no teste de Miller-Rabin
     """
     p = 4
     # keep generating while the primality test fail
