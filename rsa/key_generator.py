@@ -59,3 +59,16 @@ def generate_prime_number(length: int = 1024):
         p = generate_prime_candidate(length)
 
     return p
+
+def mod_inverse(e: int, phi: int):
+    """
+    Gera o módulo inverso de um número.
+    """
+
+    for d in range (3, phi):
+
+        if (d * e) % phi == 1:
+
+            return d 
+
+    raise ValueError ("Mod_inverse does not exist!")
