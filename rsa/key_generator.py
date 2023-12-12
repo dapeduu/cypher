@@ -40,7 +40,7 @@ def miller_rabin(number: int, rounds: int):
                 break
         else:
             return False
-            
+        
     return True
 
 def generate_prime_candidate(length: int):
@@ -60,20 +60,17 @@ def generate_prime_number(length: int = 1024):
     """
     p = 4
     # keep generating while the primality test fail
-    while not miller_rabin(p, 128):
+    while not miller_rabin(p, 40):
         p = generate_prime_candidate(length)
 
+
+    print("Número primo aleatório gerado!")
     return p
 
 def mod_inverse(e: int, phi: int):
     """
     Gera o módulo inverso de um número.
     """
-
-    for d in range (3, phi):
-
-        if (d * e) % phi == 1:
-
-            return d 
-
-    raise ValueError ("Mod_inverse does not exist!")
+    result = pow(e, phi-2, phi)
+    print("Módulo inverso gerado!")
+    return result

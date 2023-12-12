@@ -1,46 +1,75 @@
 import key_generator
 import math
+import typing
+import random
 
+def carmichael(n: int):
+    """https://stackoverflow.com/questions/47761383/proper-carmichael-function"""
+    n=int(n)
+    k=2
+    a=1
+    alist: typing.List[int] = []
 
+    while not ((math.gcd(a,n))==1):
+        a=a+1
 
-def get_public_key(e: int = 65537):
-    """
-    A chave publica é composta do resultado da multiplicação de dois numeros primos distintos, 'p' e 'q' e de um expoente 'e'.
+    while ((math.gcd(a,n))==1) & (a<=n) :
+        alist.append(a)
+        a=a+1
+        while not ((math.gcd(a,n))==1):
+            a=a+1
 
-    https://datatracker.ietf.org/doc/html/rfc8017#section-3.1
-    """
-    p = key_generator.generate_prime_number()
-    q = key_generator.generate_prime_number()
-    n = p * q
-    lambda_n =  math.lcm(p - 1, q - 1)
-    test = math.gcd(e, lambda_n) == 1
+    timer=len(alist)
+    while timer>=0:
+        for a in alist:
+            if (a**k)%n==1:
+                timer=timer-1
+                if timer <0:
+                    break
+                pass
+            else:
+                timer=len(alist)
+                k=k+1
+    return k
 
-    if not test: raise ValueError("Os valores escolhidos para 'p', 'q' e 'e' não passam no teste") 
+def show_values(p: int, q: int, e: int, d: int, n: int, phi_n: int):
+    print ("Prime number P: ", p)
+    print ("Prime number q: ", q)
+    print ("Public Key: ", e)
+    print ("Private Key: ", d)
+    print ("n: ", n)
+    print ("Phi of n: ", phi_n, " Secret")
 
-    return n, e
+def show_result(msg: str, encripted_msg: str):
+    print("Original message: ", msg)
+    print("Encripted message:", encripted_msg)
 
-# TODO: chave privada ainda n funciona
-def get_private_key(d: int = 65537, e: int = 65537):
-    """"
-    A chave privada, assim como a publica, 
-    é composta do resultado da multiplicação de dois numeros primos distintos, 'p' e 'q' e de um expoente 'd'.
+p, q = key_generator.generate_prime_number(), key_generator.generate_prime_number()
 
-    https://datatracker.ietf.org/doc/html/rfc8017#section-3.2
-    """
-    p = key_generator.generate_prime_number()
-    q = key_generator.generate_prime_number()
-    n = p * q
-    lambda_n =  math.lcm(p - 1, q - 1)
-    test = (e * d) % lambda_n == 1 
+if p == q:
+    raise ValueError("Você conseguiu gerar 2 números iguais aleatóriamente. Falhou com sucesso!")
 
-    if not test: raise ValueError("Os valores escolhidos para 'p', 'q' e 'd' não passam no teste")  
+n = p * q
+phi_n = (p-1) * (q-1)
+e = random.randint(3, phi_n-1)
 
-    return n, d
+while math.gcd(e, phi_n) != 1: #gcd=greater common denometer     != not equal
+     e = random.randint(3, phi_n - 1)
 
-def encrypt(msg: str):
-    rsa_public_modulus, rsa_public_exponent = get_public_key()
-    rsa_private_modulus, rsa_private_exponent = get_private_key()
+d = key_generator.mod_inverse(e, phi_n)
 
+show_values(p, q, e, d, n, phi_n)
 
-if __name__ == "__main__":
-    encrypt("teste")
+message = "Oi" # input("Enter your message to Encrypt ")
+message_unicode = [ord(ch) for ch in message]
+
+# (m ^ e) mod n = c 
+ciphertext_list = [pow(ch, e, n) for ch in message_unicode]
+print("Ciphertext generated.")
+recovered_text_list = [pow(ch, d, n) for ch in ciphertext_list] 
+print("Recovered text generated.")
+
+recovered_text = "".join (chr(ch) for ch in recovered_text_list)
+recovered_ciphertext = "".join (chr(ch) for ch in ciphertext_list)
+
+show_result(message, recovered_ciphertext)
