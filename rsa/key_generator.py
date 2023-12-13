@@ -60,9 +60,8 @@ def generate_prime_number(length: int = 1024):
     """
     p = 4
     # keep generating while the primality test fail
-    while not miller_rabin(p, 40):
+    while not miller_rabin(p, rounds=40):
         p = generate_prime_candidate(length)
-
 
     print("Número primo aleatório gerado!")
     return p
@@ -71,6 +70,6 @@ def mod_inverse(e: int, phi: int):
     """
     Gera o módulo inverso de um número.
     """
-    result = pow(e, phi-2, phi)
+    result = pow(e, -1, phi)
     print("Módulo inverso gerado!")
     return result
